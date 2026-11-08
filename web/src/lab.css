@@ -1,0 +1,13 @@
+.level-comparison{margin:18px 0 16px;padding:clamp(16px,2.3vw,26px);background:linear-gradient(135deg,#111827,#0c111b 70%);border:1px solid rgba(166,183,218,.16)}
+.comparison-heading{display:flex;justify-content:space-between;align-items:center;gap:18px;margin-bottom:18px}
+.comparison-heading h2{margin:9px 0 5px;font-size:clamp(18px,2vw,24px);letter-spacing:-.04em}
+.comparison-heading p,.comparison-footnote{margin:0;color:#8993a8;font-size:11px;line-height:1.6}
+.comparison-table{overflow-x:auto;border-top:1px solid rgba(166,183,218,.14)}
+.comparison-row{min-width:660px;display:grid;grid-template-columns:1.05fr 2fr 1.1fr .9fr .8fr;align-items:center;gap:12px;padding:12px 5px;border-bottom:1px solid rgba(166,183,218,.1);font:10px 'DM Mono',Consolas,monospace;color:#c5cde0}
+.comparison-head{font-size:8px;letter-spacing:.1em;color:#8792a9}
+.comparison-row>b{color:#e4e9f5}
+.comparison-error{grid-column:span 4;color:#ff819b}
+.comparison-snapshot{margin:0 0 9px;color:#61dfe7;font:9px 'DM Mono',Consolas,monospace;letter-spacing:.04em}
+.comparison-footnote{margin-top:12px;font-size:10px}
+.level-comparison .button:disabled{opacity:.5;cursor:wait}
+@media(max-width:600px){.comparison-heading{align-items:flex-start;flex-direction:column}.comparison-heading .button{height:36px}.comparison-row{font-size:9px}}

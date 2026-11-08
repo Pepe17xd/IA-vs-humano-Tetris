@@ -1,0 +1,17 @@
+{
+  "name": "tetris-ai-arena",
+  "version": "1.0.0",
+  "private": true,
+  "license": "MIT",
+  "type": "module",
+  "description": "A reproducible, browser-based Tetris arena and AI research lab.",
+  "scripts": {
+    "dev": "node scripts/serve.mjs web 4173",
+    "build": "node scripts/build.mjs",
+    "preview": "node scripts/serve.mjs dist 4173",
+    "test": "node --test web/tests/*.test.js",
+    "check": "node scripts/check.mjs",
+    "lint": "node scripts/check.mjs",
+    "benchmark": "node scripts/benchmark.mjs"
+  }
+}

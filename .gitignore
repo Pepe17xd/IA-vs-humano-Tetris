@@ -1,0 +1,15 @@
+.venv/
+*.egg-info/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.test-tmp/
+node_modules/
+dist/
+results/
+.env
+.env.*
+!.env.example
+*.log
+coverage/
+config/board_region.json
