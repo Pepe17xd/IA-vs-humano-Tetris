@@ -59,7 +59,7 @@ export function createGame(seed = 42) {
   const garbageRandom = makeRandom((Number(seed) ^ 0xa511e9b3) >>> 0);
   const queue = Array.from({ length: 6 }, () => drawPiece(random));
   const state = {
-    board: EMPTY_BOARD(), random, garbageRandom, queue, current: null, hold: null, canHold: true,
+    board: EMPTY_BOARD(), colorBoard: Array.from({length: HEIGHT}, () => Array(WIDTH).fill(null)), random, garbageRandom, queue, current: null, hold: null, canHold: true,
     incoming: [], score: 0, lines: 0, pieces: 0, combo: -1, backToBack: false, attacksSent: 0,
     level: 1, alive: true, lastAction: 'spawn', gravityClock: 0, lockClock: 0, lockResets: 0,
     totalThinkMs: 0, decisionCount: 0,
@@ -163,6 +163,7 @@ export function applyGarbageRows(board, holes) {
 function pushGarbage(state, holes) {
   const result = applyGarbageRows(state.board, holes);
   state.board = result.board;
+  if (state.colorBoard) for (let i = holes.length - 1; i >= holes.length - result.pushed; i--) { state.colorBoard.shift(); state.colorBoard.push(Array.from({length: WIDTH}, (_, x) => x === holes[i] ? null : 'garbage')); }
   if (result.topOut) state.alive = false;
   return result.pushed;
 }
@@ -172,13 +173,16 @@ export function lockPiece(state) {
   const p = state.current;
   const spin = tSpinType(state, p);
   const board = cloneBoard(state.board);
+  const colorBoard = state.colorBoard?.map(row => row.slice());
   for (const [x,y] of cellsAt(p.kind, p.rotation, p.x, p.y)) {
     if (y < HIDDEN_ROWS || y < 0) { state.alive = false; return { attack: 0, cleared: 0, locked: false, topOut: true }; }
     board[y] |= 1 << x;
+    if (colorBoard) colorBoard[y][x] = p.kind;
   }
   const full = (1 << WIDTH) - 1;
   const remaining = board.filter(row => row !== full);
   const cleared = HEIGHT - remaining.length;
+  if (colorBoard) state.colorBoard = [...Array.from({length: cleared}, () => Array(WIDTH).fill(null)), ...colorBoard.filter((_, y) => board[y] !== full)];
   state.board = [...Array.from({ length: cleared }, () => 0), ...remaining];
   state.pieces++;
   const scoringLevel = state.level;
