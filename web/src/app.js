@@ -2,6 +2,7 @@ import { action, ghostY, tick, cellsAt, CELLS, WIDTH, VISIBLE_ROWS, HIDDEN_ROWS,
 import { createTouchControls } from './input.js';
 import { drawCandidateOutlines } from './lab-render.js';
 import { DIFFICULTIES } from './agent.js';
+import { aiSpeed } from './ai-speed.js';
 import { executePlanStep } from './agent-executor.js';
 import { createMatch, generateMatchSeed, isCompetitiveResult, resolveMatchEvent, resolveMatchEvents, simulatedWinner, snapshotMatchSettings } from './match.js';
 import { bindCurrentWorker } from './worker-guard.js';
@@ -65,7 +66,7 @@ function showSetup() {
   const values = Object.entries(DIFFICULTIES).map(([key,item]) => `<option value="${key}" ${settings.difficulty===key?'selected':''}>${item.label}</option>`).join('');
   const modal = document.createElement('div'); modal.className = 'modal-backdrop'; modal.innerHTML = `<section class="setup-card"><button class="modal-close" aria-label="Cerrar">×</button><div class="eyebrow">CONFIGURACIÓN DE PARTIDA</div><h2>Prepara la partida.</h2><p>Elige tu rival y configura las reglas de la partida.</p>
     <label>NIVEL DE LA IA<select id="setup-difficulty">${values}</select></label>
-    <p>Ambos jugadores reciben la misma secuencia de piezas.</p>
+    <p>Ambos jugadores comparten gravedad y secuencia de piezas. La IA ejecuta sus movimientos más rápido en niveles altos; en extremo tiene una ventaja de velocidad.</p>
     <button class="button button-primary setup-start" id="confirm-start">Entrar a la arena ${icons.arrow}</button></section>`;
   app.append(modal);
   modal.querySelector('.modal-close').addEventListener('click', () => modal.remove());
@@ -135,7 +136,7 @@ function pauseOnPlannerError(message) {
 function requestAI() {
   if (aiPathTimer) clearTimeout(aiPathTimer); aiPathTimer=0;
   if (!game || game.paused || ended || !game.ai.alive || !game.ai.current || !worker) return;
-  if (game.ai.current.y < 2 && ghostY(game.ai) > game.ai.current.y) {
+  if (aiSpeed(game.config.difficulty).waitForVisible && game.ai.current.y < 2 && ghostY(game.ai) > game.ai.current.y) {
     setAIStatus('ESPERANDO', 'La pieza de la IA está entrando al tablero.');
     aiPathTimer=setTimeout(requestAI,100);
     return;
@@ -213,6 +214,7 @@ function onPlan(plan) {
   aiAnalysisSnapshot=pendingAnalysisSnapshot;
   setAIStatus('EJECUTANDO', 'La IA está jugando.');
   const signature=pieceSignature(game.ai);
+  const speed=aiSpeed(game.config.difficulty);
   const path=[...plan.move.path]; let index=0;
   const runNext=()=>{
     try { runPlanStep(); }
@@ -227,8 +229,8 @@ function onPlan(plan) {
     const command=path[index];
     if (command==='hardDrop' && !aiDropAnimation) {
       if (ghostY(game.ai)!==plan.move.y) { setAIStatus('RECALCULANDO'); requestAI(); return; }
-      aiDropAnimation={ from:p.y, to:ghostY(game.ai), started:performance.now() };
-      aiPathTimer=setTimeout(runNext,240);
+      aiDropAnimation={ from:p.y, to:ghostY(game.ai), started:performance.now(), duration:speed.dropMs };
+      aiPathTimer=setTimeout(runNext,speed.dropMs);
       return;
     }
     aiDropAnimation=null;
@@ -238,10 +240,10 @@ function onPlan(plan) {
     const result=step.result;
     routeResult('ai',result);
     if (screen==='game') updateGameUI();
-    if (index<path.length && !ended) aiPathTimer=setTimeout(runNext,120);
-    else if (!ended) { aiPathTimer=setTimeout(requestAI,60); }
+    if (index<path.length && !ended) aiPathTimer=setTimeout(runNext,speed.stepMs);
+    else if (!ended) { aiPathTimer=setTimeout(requestAI,speed.betweenMs); }
   };
-  aiPathTimer=setTimeout(runNext, Math.min(90, plan.decisionMs||0));
+  aiPathTimer=setTimeout(runNext, speed.firstMs);
   updateLabPanel(); refreshLabScreen();
 }
 
@@ -312,7 +314,7 @@ function pauseMatch(toggle) {
 function renderGame() {
   if(!game) return renderHome();
   const experiment=game.config.experimental?'<span class="mode-tag experimental-tag">SIMULACIÓN EXPERIMENTAL</span>':'';
-  shell(`<section class="match-head"><div><div class="eyebrow"><span class="eyebrow-line"></span> PARTIDA EN CURSO ${experiment}</div><h1>Humano <span>vs</span> máquina</h1></div><div class="match-controls"><button id="pause-match" class="button button-outline">Ⅱ Pausar</button><button id="restart-match" class="button button-quiet">↻ Reiniciar</button></div></section>
+  shell(`<section class="match-head"><div><div class="eyebrow"><span class="eyebrow-line"></span> PARTIDA EN CURSO ${experiment}</div><h1>Humano <span>vs</span> máquina</h1><p class="execution-note">${game.config.difficulty==='extreme'?'EXTREMO · La IA tiene ventaja de velocidad de ejecución.':'La velocidad de ejecución de la IA depende de la dificultad.'} Ambos comparten gravedad y reglas.</p></div><div class="match-controls"><button id="pause-match" class="button button-outline">Ⅱ Pausar</button><button id="restart-match" class="button button-quiet">↻ Reiniciar</button></div></section>
     <section class="match-layout"><article class="player-column human-column"><div class="player-head"><div class="player-name"><span class="player-symbol human-symbol">H</span><span><b>TÚ</b><small>JUGADOR HUMANO</small></span></div><span class="playing-tag">${game.human.alive?'● JUGANDO':'FUERA'}</span></div><div class="game-top-row"><div class="mini-slot"><small>GUARDAR <kbd>C</kbd></small><canvas id="human-hold" class="mini-canvas"></canvas></div><div class="stat-chips"><span>NIVEL <b id="human-level">1</b></span><span>TIEMPO <b id="match-time">00:00</b></span></div></div><div class="canvas-wrap human-board"><canvas id="human-board" class="board-canvas" aria-label="Tu tablero de Tetris"></canvas><span class="board-edge edge-top"></span><span class="board-edge edge-bottom"></span></div><div class="game-bottom-row"><span>LÍNEAS <b id="human-lines">0</b></span><span>PUNTOS <b id="human-score">0</b></span><span>ATAQUE <b id="human-attack">0</b></span></div><div class="next-row"><small>SIGUIENTE</small><canvas id="human-next" class="next-canvas"></canvas></div></article>
     <div class="versus-column"><div class="versus-line"></div><div class="versus-mark">VS</div><div class="versus-line"></div><div class="timer-orb"><span id="versus-time">00:00</span><small>TRANSCURRIDO</small></div><div class="versus-seed">MISMA SECUENCIA</div></div>
     <article class="player-column ai-column"><div class="player-head"><div class="player-name"><span class="player-symbol ai-symbol">AI</span><span><b>LA MÁQUINA</b><small>${difficultyLabel(game.config.difficulty)} RAZONAMIENTO</small></span></div><span id="ai-state-tag" class="ai-thinking"><i></i> ${game.ai.alive?'PENSANDO':'FUERA'}</span></div><div class="game-top-row"><div class="mini-slot"><small>GUARDAR</small><canvas id="ai-hold" class="mini-canvas"></canvas></div><div class="stat-chips"><span>NIVEL <b id="ai-level">1</b></span></div></div><div class="canvas-wrap ai-board"><canvas id="ai-board" class="board-canvas" aria-label="Tablero de la IA"></canvas><span class="board-edge edge-top"></span><span class="board-edge edge-bottom"></span></div><div class="game-bottom-row"><span>LÍNEAS <b id="ai-lines">0</b></span><span>PUNTOS <b id="ai-score">0</b></span><span>ATAQUE <b id="ai-attack">0</b></span></div><div class="next-row"><small>SIGUIENTE</small><canvas id="ai-next" class="next-canvas"></canvas></div></article></section>
@@ -351,7 +353,7 @@ function drawBoard(canvas,state,showGhost) {
     cell(ctx,x*cw,y*ch,cw,ch,occupied?(colors[state.colorBoard?.[y+HIDDEN_ROWS]?.[x]] || '#7487a6'):null,occupied?'#fff':null);
   }
   if(showGhost&&state.current){const p=state.current,gy=ghostY(state);for(const [x,y]of cellsAt(p.kind,p.rotation,p.x,gy))if(y>=2)cell(ctx,x*cw,(y-2)*ch,cw,ch,null,colors[p.kind],true);}
-  if(state.current){const p=state===game?.ai && aiDropAnimation ? {...state.current,y:aiDropAnimation.from+(aiDropAnimation.to-aiDropAnimation.from)*Math.min(1,(performance.now()-aiDropAnimation.started)/240)} : state.current;for(const [x,y]of cellsAt(p.kind,p.rotation,p.x,p.y))if(y>=2)cell(ctx,x*cw,(y-2)*ch,cw,ch,colors[p.kind],colors[p.kind]);}
+  if(state.current){const p=state===game?.ai && aiDropAnimation ? {...state.current,y:aiDropAnimation.from+(aiDropAnimation.to-aiDropAnimation.from)*Math.min(1,(performance.now()-aiDropAnimation.started)/aiDropAnimation.duration)} : state.current;for(const [x,y]of cellsAt(p.kind,p.rotation,p.x,p.y))if(y>=2)cell(ctx,x*cw,(y-2)*ch,cw,ch,colors[p.kind],colors[p.kind]);}
   if(state.incoming.length){ctx.fillStyle='#ff5c88';ctx.fillRect(0,rect.height-3,rect.width*Math.min(1,state.incoming.length/12),3);}
 }
 function cell(ctx,x,y,w,h,fill,stroke,ghost=false){const pad=Math.max(1,w*.07);if(fill){ctx.fillStyle=fill;ctx.fillRect(x+pad,y+pad,w-2*pad,h-2*pad);ctx.fillStyle='rgba(255,255,255,.12)';ctx.fillRect(x+pad,y+pad,w-2*pad,Math.max(1,h*.09));}if(stroke){ctx.strokeStyle=ghost?stroke:fill;ctx.globalAlpha=ghost?.48:.78;ctx.lineWidth=ghost?1.4:1;ctx.strokeRect(x+pad+1,y+pad+1,w-2*pad-2,h-2*pad-2);ctx.globalAlpha=1;}}
@@ -359,7 +361,7 @@ function drawMini(canvas,piece){if(!canvas)return;const rect=canvas.getBoundingC
 function drawQueue(canvas,queue){if(!canvas)return;const rect=canvas.getBoundingClientRect();if(!rect.width)return;const dpr=Math.min(2,window.devicePixelRatio||1);canvas.width=Math.round(rect.width*dpr);canvas.height=Math.round(rect.height*dpr);const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);ctx.clearRect(0,0,rect.width,rect.height);queue.slice(0,5).forEach((piece,index)=>{const width=rect.width/5,cells=CELLS[piece][0],size=Math.min(14,rect.height/3,width/4),maxX=Math.max(...cells.map(c=>c[0])),maxY=Math.max(...cells.map(c=>c[1]));const sx=index*width+(width-size*(maxX+1))/2,sy=(rect.height-size*(maxY+1))/2;for(const[x,y]of cells)cell(ctx,sx+x*size,sy+y*size,size,size,colors[piece],colors[piece]);});}
 
 function updateGameUI(){if(!game)return;for(const [prefix,state]of [['human',game.human],['ai',game.ai]]){const q=id=>app.querySelector(`#${prefix}-${id}`);if(q('level'))q('level').textContent=state.level;if(q('lines'))q('lines').textContent=state.lines;if(q('score'))q('score').textContent=state.score.toLocaleString();if(q('attack'))q('attack').textContent=state.attacksSent;if(q('board'))drawBoard(q('board'),state,prefix==='human');if(q('hold'))drawMini(q('hold'),state.hold);if(q('next'))drawQueue(q('next'),state.queue);}
-  const time=app.querySelector('#match-time');if(time)time.textContent=formatTime(matchElapsed);const vt=app.querySelector('#versus-time');if(vt)vt.textContent=formatTime(matchElapsed);const tag=app.querySelector('#ai-state-tag');if(tag)tag.innerHTML=game.ai.alive?`<i></i> ${aiStatus}`:'FUERA';}
+  const time=app.querySelector('#match-time');if(time)time.textContent=formatTime(matchElapsed);const vt=app.querySelector('#versus-time');if(vt)vt.textContent=formatTime(matchElapsed);const tag=app.querySelector('#ai-state-tag');if(tag){tag.innerHTML=game.ai.alive?`<i></i> ${aiStatus}`:'FUERA';tag.classList.toggle('extreme-active',game.config.difficulty==='extreme'&&aiStatus==='EJECUTANDO');}}
 
 function updateLabPanel(){
   const target=app.querySelector('#lab-inline');

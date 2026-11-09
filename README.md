@@ -63,6 +63,8 @@ The Python assistant is an experimental read-only screen analyzer. It is not use
 - The agent sees the active piece, hold slot and the same five-piece preview shown to the human. Each level searches only within that visible queue; Extreme is capped at six plies (current piece plus five previews).
 - SRS movement, wall kicks, lock delay and hard-drop commands are applied by the game engine. The agent plans a path of legal moves and plays that path through the same engine.
 - The worker has per-level node and time budgets, so planning does not freeze rendering. The player can continue moving while a decision is being calculated.
+- AI movement pacing also varies by difficulty: beginner 650 ms, intermediate 300 ms, advanced 110 ms and extreme 15 ms per planned action. These are animation intervals, not search limits or human gravity. Extreme has a deliberate execution-speed advantage; the motor, gravity and scoring rules remain shared.
+- Landscape photographs are bundled locally; their authors and license are documented in [`web/assets/ATTRIBUTION.md`](web/assets/ATTRIBUTION.md).
 - Experimental simulated outcomes remain available to research tools, but normal browser matches always use the actual result.
 - Match outcomes and settings are stored in browser local storage only. No server, account or database is used.
 
