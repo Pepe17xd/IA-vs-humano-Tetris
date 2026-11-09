@@ -47,3 +47,12 @@ test('late worker messages and failures from a prior match are ignored', () => {
   oldWorker.onerror({message:'late failure'});
   assert.deepEqual(effects,[]);
 });
+
+test('message processing and deserialization failures reach the recovery handler', () => {
+  const worker={}, match={}, errors=[];
+  bindCurrentWorker(worker,match,()=>true,()=>{throw new ReferenceError('active is not defined');},error=>errors.push(error));
+  worker.onmessage({data:{requestId:1}});
+  worker.onmessageerror();
+  assert.match(errors[0],/active is not defined/);
+  assert.match(errors[1],/respuesta/);
+});

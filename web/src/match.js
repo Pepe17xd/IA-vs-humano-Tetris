@@ -2,6 +2,10 @@ import { createGame, enqueueGarbage, rngNext } from './game.js';
 
 const AI_LEVELS = new Set(['beginner', 'intermediate', 'advanced', 'extreme']);
 
+export function generateMatchSeed(random = Math.random) {
+  return Math.floor(random() * 0x100000000) >>> 0;
+}
+
 export function snapshotMatchSettings(value = {}) {
   const probability = Number(value.probability);
   const gravityScale = Number(value.gravityScale);
