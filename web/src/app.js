@@ -27,7 +27,7 @@ function formatTime(ms) { const sec = Math.floor(ms / 1000); return `${String(Ma
 function difficultyLabel(value = settings.difficulty) { return DIFFICULTIES[value]?.label || 'INTERMEDIO'; }
 function candidateWidth(score,candidates){const values=candidates.map(item=>item.score),low=Math.min(...values),high=Math.max(...values);return `${Math.round(8+(high===low?1:(score-low)/(high-low))*92)}%`;}
 
-function shell(content, activa = '') {
+function shell(content, active = '') {
   document.body.classList.toggle('playing', screen === 'game');
   app.innerHTML = `<div class="ambient ambient-one"></div><div class="ambient ambient-two"></div>
     <header class="topbar"><a class="brand" href="#home" data-screen="home" aria-label="Inicio de Tetris IA Arena"><span class="brand-mark"><i></i><i></i><i></i><i></i></span><span>TETRIS<span class="brand-accent">AI</span><small>ARENA</small></span></a>
