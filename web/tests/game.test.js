@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { action, CELLS, createGame, drawPiece, enqueueGarbage, lockPiece, makeRandom, PIECES, rotatePiece, serializeGame, tick, visibleRows } from '../src/game.js';
+import { action, CELLS, createGame, drawPiece, enqueueGarbage, gravityInterval, lockPiece, makeRandom, PIECES, rotatePiece, serializeGame, tick, visibleRows } from '../src/game.js';
 import { DIFFICULTIES, estimateOpponentThreat, evaluateBoard, findFuturePlacements, findPlacements, planMove } from '../src/agent.js';
 import { drawCandidateOutlines } from '../src/lab-render.js';
 import { createMatch, isCompetitiveResult, matchWinner, resolveMatchEvent, resolveMatchEvents, simulatedWinner, snapshotMatchSettings } from '../src/match.js';
@@ -178,6 +178,16 @@ test('gravity scaling cannot exceed the documented 65 ms minimum interval',()=>{
   const game=createGame(65);game.level=20;
   tick(game,64,false,1.35);assert.equal(game.current.y,0);
   tick(game,1,false,1.35);assert.equal(game.current.y,1);
+});
+
+test('arcade gravity accelerates deterministically by level and stays bounded',()=>{
+  assert.equal(gravityInterval(1),820);
+  for(let level=1;level<30;level++) {
+    assert.ok(gravityInterval(level+1)<=gravityInterval(level));
+    assert.ok(gravityInterval(level)>=65);
+  }
+  assert.equal(gravityInterval(100),65);
+  assert.equal(gravityInterval(NaN),gravityInterval(1));
 });
 
 test('gravity, hard drop, ghost and deterministic games behave consistently', () => {

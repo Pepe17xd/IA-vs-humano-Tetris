@@ -31,14 +31,15 @@ test('match executes real worker plans, updates score, and hides the seed', asyn
     postMessage(message){this.request=message;schedule(()=>this.onmessage({data:planMove(message.state,message.difficulty,message.requestId)}),1);}
     terminate(){}
   }
-  const original={document:globalThis.document,window:globalThis.window,localStorage:globalThis.localStorage,Worker:globalThis.Worker,performance:globalThis.performance,setTimeout:globalThis.setTimeout,clearTimeout:globalThis.clearTimeout};
+  const original={document:globalThis.document,window:globalThis.window,localStorage:globalThis.localStorage,Worker:globalThis.Worker,performance:globalThis.performance,setTimeout:globalThis.setTimeout,clearTimeout:globalThis.clearTimeout,clearInterval:globalThis.clearInterval};
   globalThis.document={querySelector:()=>app,createElement:()=>new Element(),body:{classList:{toggle(){}}},documentElement:{style:{setProperty(){}}}};
-  globalThis.window={addEventListener(){},setInterval(){return 1;},devicePixelRatio:1};
+  globalThis.window={addEventListener(){},setInterval(fn,delay){const repeat=()=>{fn();schedule(repeat,delay);};return schedule(repeat,delay);},devicePixelRatio:1};
   globalThis.localStorage={getItem:()=>null,setItem(){}};
   globalThis.Worker=TestWorker;
   globalThis.performance={now:()=>now};
   globalThis.setTimeout=schedule;
   globalThis.clearTimeout=id=>jobs.delete(id);
+  globalThis.clearInterval=id=>jobs.delete(id);
   try {
     await import('../src/app.js?match-test');
     app.querySelector('#start-match').click();
@@ -52,8 +53,8 @@ test('match executes real worker plans, updates score, and hides the seed', asyn
     assert.doesNotMatch(app.innerHTML,/semilla/i);
     assert.match(instances[0].url.pathname,/\/src\/ai-worker\.js$/);
     assert.equal(instances[0].options.type,'module');
+    advance(9000);
     assert.ok(instances[0].request.state.current);
-    advance(5000);
     assert.ok(Number(app.querySelector('#ai-score').textContent)>0,'real placements update the AI score');
     assert.ok(instances[0].request.requestId>1,'new decisions are requested after a placement');
   } finally {

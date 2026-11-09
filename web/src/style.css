@@ -10,8 +10,31 @@
 /* Una arena luminosa que deja ver el paisaje durante la partida. */
 body{background:radial-gradient(circle at 15% 15%,#223462 0,transparent 35%),radial-gradient(circle at 85% 35%,#482955 0,transparent 35%),#090d1b}
 body.playing{background:linear-gradient(120deg,rgba(7,13,31,.76),rgba(17,17,41,.58)),var(--landscape) center/cover fixed;background-color:#101a2c}
+/* Arcade arena: local gradients keep the game independent of external artwork. */
+body,body.playing{background:radial-gradient(ellipse at 18% 18%,#10344a 0,transparent 42%),radial-gradient(ellipse at 85% 30%,#311745 0,transparent 42%),#070a16;color:#eefaff}
+body.playing{background-attachment:fixed}
+.topbar{border-bottom:1px solid #6ef6ff45;background:#080b19e8}
+.brand-mark i{box-shadow:0 0 12px #52e7eb99}
+.hero h1,.match-head h1,.result-screen h1{font-weight:800;letter-spacing:-.04em;text-shadow:0 0 30px #51dbe522}
+.eyebrow,.panel-label{color:#9cecf4}
+.feature-strip,.player-column,.lab-dock,.setup-card,.decision-panel,.lab-board-panel,.settings-panel{background:#0b1222eF;border:1px solid #5addf03b;box-shadow:0 8px 32px #0008,inset 0 1px #ffffff0d}
+.ai-column{border-color:#c26aff77;box-shadow:0 0 26px #a052e624,inset 0 1px #ffffff0d}
+.human-column{border-color:#46eaff77;box-shadow:0 0 26px #29e2ff24,inset 0 1px #ffffff0d}
+.canvas-wrap{background:#070c1b;border-color:#64e8fa77;box-shadow:inset 0 0 28px #000b,0 0 18px #4fe8f22b}
+.ai-board{border-color:#d278ff77;box-shadow:inset 0 0 28px #000b,0 0 18px #bb63ee33}
+.button{transition:transform .15s ease,box-shadow .15s ease,border-color .15s ease}
+.button:active{transform:translateY(2px) scale(.98)}
+.versus-mark{color:#fff;border-color:#dc72ff;box-shadow:0 0 18px #d557ed77;text-shadow:0 0 12px #ff83ee}
+.line-clear{animation:arcade-clear .38s ease-out}
+.result-win .result-symbol{animation:arcade-victory 1.8s ease-in-out infinite}
+.result-loss .result-symbol{animation:arcade-defeat .7s ease-out}
+@keyframes arcade-clear{0%{filter:brightness(2.4);box-shadow:0 0 35px #fff}100%{filter:brightness(1)}}
+@keyframes arcade-victory{50%{transform:scale(1.14);text-shadow:0 0 28px #5ff}}
+@keyframes arcade-defeat{25%{transform:translateX(-5px)}50%{transform:translateX(5px)}75%{transform:translateX(-2px)}}
+@media(prefers-reduced-motion:reduce){.line-clear,.result-win .result-symbol,.result-loss .result-symbol{animation:none}}
 body.playing .player-column{background:rgba(8,16,31,.68);backdrop-filter:blur(12px);border-color:#ffffff32;border-radius:16px}
 body.playing .canvas-wrap{background:rgba(4,12,25,.38);border-color:#ffffff72;border-radius:5px;overflow:hidden}
+body.playing .canvas-wrap{width:min(100%,225px);max-height:none}
 body.playing .canvas-wrap:after{background-image:linear-gradient(to right,#ffffff18 1px,transparent 1px),linear-gradient(to bottom,#ffffff18 1px,transparent 1px)}
 .topbar{background:rgba(10,15,32,.78)}
 .hero h1{letter-spacing:-.05em}.hero-art{animation:float-arena 6s ease-in-out infinite}.mini-board{border-radius:12px;box-shadow:0 25px 80px #0009,0 0 60px #55eaff30}.orbit{animation:orbit-arena 18s linear infinite}.orbit-b{animation-direction:reverse}

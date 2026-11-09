@@ -247,12 +247,17 @@ export function action(state, command) {
   return { moved: false };
 }
 
+export function gravityInterval(level, gravityScale = 1) {
+  const safeLevel = Number.isFinite(level) ? Math.max(1, Math.floor(level)) : 1;
+  const scale = Number.isFinite(gravityScale) && gravityScale > 0 ? gravityScale : 1;
+  return Math.max(65, 820 * (0.78 ** (safeLevel - 1)) / scale);
+}
+
 export function tick(state, deltaMs, softDrop = false, gravityScale = 1) {
   if (!state.alive || !state.current) return null;
   const p = state.current;
   state.gravityClock += deltaMs;
-  const safeGravityScale = Number.isFinite(gravityScale) && gravityScale > 0 ? gravityScale : 1;
-  const gravity = Math.max(65, 820 * (0.78 ** (state.level - 1)) / safeGravityScale);
+  const gravity = gravityInterval(state.level, gravityScale);
   while (state.gravityClock >= (softDrop ? 38 : gravity)) {
     state.gravityClock -= softDrop ? 38 : gravity;
     if (collides(state.board, p.kind, p.rotation, p.x, p.y + 1)) break;

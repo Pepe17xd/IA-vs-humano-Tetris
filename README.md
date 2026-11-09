@@ -12,7 +12,7 @@ Requirements: Node.js 20 or newer. No package installation is needed.
 npm.cmd run dev
 ```
 
-Open http://127.0.0.1:4173. Select an AI level and seed, then start a match. Settings, results and statistics stay in this browser's local storage.
+Open http://127.0.0.1:4173. Select an AI level and start a match. Both players receive the same automatically generated piece sequence. Settings, results and statistics stay in this browser's local storage.
 
 ## Commands
 
@@ -22,6 +22,10 @@ npm.cmd run lint                 # syntax, imports and whitespace
 npm.cmd run check                # JavaScript syntax checks
 npm.cmd run build                # prepare the static site in dist/
 npm.cmd run preview              # serve dist/ locally on port 4173
+npm.cmd ci                       # install development dependencies
+npx.cmd playwright install chromium
+npm.cmd run build
+npm.cmd run test:e2e             # real Chromium and module-worker test under the Pages prefix
 npm.cmd run benchmark -- --seeds 3 --pieces 180
 npm.cmd run benchmark -- --agent extreme --opponent beginner --seeds 3 --pieces 400
 npm.cmd run benchmark -- --agent extreme --opponent random --seeds 10 --pieces 300
@@ -53,13 +57,13 @@ The Python assistant is an experimental read-only screen analyzer. It is not use
 
 ## Match modes and fairness
 
-- Both players use the same `web/src/game.js` engine and configurable gravity.
+- Both players use the same `web/src/game.js` engine and level-based gravity.
 - The seeded 7-bag generator is deterministic. Identical-sequence mode gives both players the same piece sequence; each board still has its own stack and attacks.
 - Seeds reproduce the piece and garbage streams. AI decisions use wall-clock search budgets, so exact plans can vary across devices or system load even with the same seed.
 - The agent sees the active piece, hold slot and the same five-piece preview shown to the human. Each level searches only within that visible queue; Extreme is capped at six plies (current piece plus five previews).
 - SRS movement, wall kicks, lock delay and hard-drop commands are applied by the game engine. The agent plans a path of legal moves and plays that path through the same engine.
 - The worker has per-level node and time budgets, so planning does not freeze rendering. The player can continue moving while a decision is being calculated.
-- “Human victory simulation” is a separate opt-in experiment. A seeded draw decides whether the displayed outcome is a human win; the match is labeled simulated and is excluded from competitive statistics.
+- Experimental simulated outcomes remain available to research tools, but normal browser matches always use the actual result.
 - Match outcomes and settings are stored in browser local storage only. No server, account or database is used.
 
 ## AI levels
