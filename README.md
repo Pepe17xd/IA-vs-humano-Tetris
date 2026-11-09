@@ -110,20 +110,11 @@ The measured sample currently in the repository is summarized in [benchmark resu
 
 ## Build and deploy
 
-`npm run build` copies the self-contained `web/` site to `dist/`. This folder can be served by any static host. For Cloudflare Pages, use build command `npm run build` and output directory `dist`. For Vercel, use the same build command and output directory. To deploy to GitHub Pages, run the manual **Deploy to GitHub Pages** workflow from the Actions tab after enabling Pages with GitHub Actions as the source. The workflow is manual so a code push never publishes the site by itself.
+`npm run build` copies the self-contained `web/` site to `dist/`. This folder can be served by any static host. For Cloudflare Pages, use build command `npm run build` and output directory `dist`. For Vercel, use the same build command and output directory.
+
+For GitHub Pages, select **Settings → Pages → Build and deployment → Source → GitHub Actions**. The **Deploy to GitHub Pages** workflow builds and publishes `dist/` on pushes to `main`, and can also be started manually from the Actions tab. The game is available at `https://pepe17xd.github.io/IA-vs-humano-Tetris/` after the deployment succeeds. This is a static JavaScript project, not a Vite application; its relative asset paths work under the repository URL.
 
 Continuous integration runs the JavaScript test suite, syntax checks, static build and existing Python tests. See [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
-
-The local Git repository is already initialized on `main`. After creating an empty GitHub repository, add its remote and publish the current files with:
-
-```powershell
-git add .
-git commit -m "Build Tetris AI Arena"
-git remote add origin https://github.com/<OWNER>/<REPOSITORY>.git
-git push -u origin main
-```
-
-Then enable GitHub Pages with **GitHub Actions** as the source. The `Deploy to GitHub Pages` workflow is manual and can be run from Actions when you choose to publish.
 
 ## License
 
